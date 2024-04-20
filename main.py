@@ -14,6 +14,10 @@ async def chat_message(sid, data):
     print("message ", data)
 
 @sio.event
+async def frame(sid, data):
+    print("frame ", data)
+
+@sio.event
 def disconnect(sid):
     print('disconnect ', sid)
 
