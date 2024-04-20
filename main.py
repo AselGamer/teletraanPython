@@ -1,7 +1,21 @@
-from ultralytics import YOLO
+from aiohttp import web
+import socketio
 
-# Load a model
-model = YOLO("yolov8n.yaml")  # build a new model from scratch
+sio = socketio.AsyncServer(cors_allowed_origins='*')
+app = web.Application()
+sio.attach(app)
 
-# Use the model
-model.train(data="coco128.yaml", epochs=3)  # train the model
+@sio.event
+def connect(sid, environ):
+    print("connect ", sid)
+
+@sio.event
+async def chat_message(sid, data):
+    print("message ", data)
+
+@sio.event
+def disconnect(sid):
+    print('disconnect ', sid)
+
+if __name__ == '__main__':
+    web.run_app(app, port=5000)
