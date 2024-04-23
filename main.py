@@ -25,7 +25,6 @@ async def frame(sid, data):
         img = Image.open(buf)
         results = model(img)
         print(results[0].tojson())
-        # print(results[0].probs)
         await sio.emit('frame', results[0].tojson(), room=sid)
 
 @sio.event
