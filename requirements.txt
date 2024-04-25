@@ -1,0 +1,4 @@
+ultralytics
+python-socketio
+aiohttp
+pillow
