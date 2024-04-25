@@ -7,30 +7,40 @@ import base64
 import re
 import json
 
- 
 sio = socketio.AsyncServer(cors_allowed_origins='*')
-app = web.Application()
-sio.attach(app)
 
-@sio.event
-def connect(sid, environ):
-    print("connect ", sid)
+class TeletranServer:
+    app = web.Application()
+    sio.attach(app)
+    model = YOLO("models/best.pt")
 
-@sio.event
-async def frame(sid, data):
-    with open('tmpImg.png', 'wb') as fh:
+    async def procesarImagen(self, sid, data):
         base64_data = re.sub('^data:image/.+;base64,', '', data)
         b64 = base64.b64decode(base64_data)
         buf = io.BytesIO(b64)
         img = Image.open(buf)
-        results = model(img)
-        print(results[0].tojson())
+        results = self.model(img, verbose=False)
         await sio.emit('frame', results[0].tojson(), room=sid)
+    # fin de procesarImagen
 
-@sio.event
-def disconnect(sid):
-    print('disconnect ', sid)
+    @sio.event
+    def connect(sid, environ):
+        print("connect ", sid)
 
-if __name__ == '__main__':
-    model = YOLO("best.pt")
-    web.run_app(app, port=5000)
+    
+    async def frame(self, sid, data):
+        await self.procesarImagen(sid, data)
+
+    @sio.event
+    def disconnect(sid):
+        print('disconnect ', sid)
+
+    def start(self, port=5000):
+        sio.on('frame', self.frame)
+        web.run_app(self.app, port=port)
+
+server = TeletranServer()
+server.start()
+    
+ 
+
