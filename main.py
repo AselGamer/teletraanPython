@@ -16,12 +16,16 @@ class TeletranServer:
 
     async def procesarImagen(self, sid, data):
         base64_data = re.sub('^data:image/.+;base64,', '', data)
-        print(base64_data)
         b64 = base64.b64decode(base64_data)
         buf = io.BytesIO(b64)
         img = Image.open(buf)
         results = self.model(img, verbose=False)
-        await sio.emit('frame', results[0].tojson(), room=sid)
+        for result in results:
+            if result.boxes is None or result.boxes.id is None:
+                await sio.emit('frame', [], room=sid)
+            else:
+                await sio.emit('frame', result.tojson(), room=sid)
+        print("response sent to ", sid)
     # fin de procesarImagen
 
     @sio.event
