@@ -22,7 +22,8 @@ class TeletranServer:
         results = self.model(img, verbose=False)
         for result in results:
             if result.boxes is None or result.boxes.id is None:
-                await sio.emit('frame', [], room=sid)
+                await sio.emit('frame', '[]', room=sid)
+                continue
             else:
                 await sio.emit('frame', result.tojson(), room=sid)
         print("response sent to ", sid)
