@@ -19,14 +19,12 @@ class TeletranServer:
         b64 = base64.b64decode(base64_data)
         buf = io.BytesIO(b64)
         img = Image.open(buf)
-        results = self.model(img, verbose=False)
-        for result in results:
-            if result.boxes is None or result.boxes.id is None:
-                await sio.emit('frame', '[]', room=sid)
-                continue
-            else:
-                await sio.emit('frame', result.tojson(), room=sid)
-        print("response sent to ", sid)
+        results = self.model(img, verbose=True)
+        if results[0].boxes.cls.numel() == 0:
+            await sio.emit('frame','[]', room=sid)
+        else:
+            await sio.emit('frame', results[0].tojson(), room=sid)
+
     # fin de procesarImagen
 
     @sio.event
@@ -36,6 +34,7 @@ class TeletranServer:
     
     async def frame(self, sid, data):
         await self.procesarImagen(sid, data)
+        pass
 
     @sio.event
     def disconnect(sid):
