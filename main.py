@@ -15,15 +15,22 @@ class TeletranServer:
     model = YOLO("models/best.pt")
 
     async def procesarImagen(self, sid, data):
-        base64_data = re.sub('^data:image/.+;base64,', '', data)
-        b64 = base64.b64decode(base64_data)
-        buf = io.BytesIO(b64)
-        img = Image.open(buf)
-        results = self.model(img, verbose=True)
-        if results[0].boxes.cls.numel() == 0:
-            await sio.emit('frame','[]', room=sid)
-        else:
-            await sio.emit('frame', results[0].tojson(), room=sid)
+        try:
+            base64_data = re.sub('^data:image/.+;base64,', '', data)
+            b64 = base64.b64decode(base64_data)
+            buf = io.BytesIO(b64)
+            img = Image.open(buf)
+            results = self.model(img, verbose=True)
+            if results[0].boxes.cls.numel() == 0:
+                await sio.emit('frame','[]', room=sid)
+            else:
+                await sio.emit('frame', results[0].tojson(), room=sid)
+        except json.JSONDecodeError as e:
+            print(f"JSONDecodeError: {e}")
+            await sio.emit('frame', '[]', room=sid)
+        except Exception as e:
+            print(f"Error processing image: {e}")
+            await sio.emit('frame', '[]', room=sid)
 
     # fin de procesarImagen
 
